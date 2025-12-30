@@ -24,7 +24,7 @@ import { formatTodosForContext, formatScratchpadForContext } from "./state";
 import type { TodoItem, ScratchpadEntry } from "./types";
 import { todoItemSchema } from "./types";
 import { devToolsMiddleware } from "@ai-sdk/devtools";
-import { addCacheControl } from "./utils";
+import { addCacheControl, compactContext } from "./utils";
 import { anthropic } from "@ai-sdk/anthropic";
 
 const callOptionsSchema = z.object({
@@ -76,8 +76,11 @@ export const deepAgent = new ToolLoopAgent({
   }),
   stopWhen: stepCountIs(50),
   callOptionsSchema,
-  prepareStep: ({ messages, model }) => ({
-    messages: addCacheControl({ messages, model }),
+  prepareStep: ({ messages, model, steps }) => ({
+    messages: addCacheControl({
+      messages: compactContext({ messages, steps }),
+      model,
+    }),
   }),
   prepareCall: ({ options, model, ...settings }) => {
     const workingDirectory = options?.workingDirectory ?? process.cwd();
