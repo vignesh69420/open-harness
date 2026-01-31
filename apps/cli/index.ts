@@ -18,7 +18,7 @@ import {
 import { loadAgentsMd } from "./agents-md";
 import { handleAuthCommand } from "./auth/commands";
 import { getWebAppUrl } from "./auth/config";
-import { loadCredentials, validateCredentials } from "./auth/credentials";
+import { loadCredentials } from "./auth/credentials";
 import { cleanup, onCleanup } from "./cleanup-handler";
 import {
   createSandbox,
@@ -162,19 +162,6 @@ async function main() {
   }
 
   const webAppUrl = getWebAppUrl();
-
-  // Validate token against server to catch revoked tokens early
-  const validation = await validateCredentials(credentials, webAppUrl);
-  if (!validation.valid) {
-    if (validation.isNetworkError) {
-      console.log(`Warning: Could not validate token: ${validation.error}\n`);
-      console.log("Continuing with cached credentials...\n");
-    } else {
-      console.log(`Authentication failed: ${validation.error}\n`);
-      console.log("Run `openharness auth login` to re-authenticate.\n");
-      process.exit(1);
-    }
-  }
 
   const gateway = createProxyGateway({
     baseUrl: webAppUrl,
