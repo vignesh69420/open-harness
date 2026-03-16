@@ -10,6 +10,39 @@ export interface TodoInfo {
   inProgress: number;
 }
 
+type StatusWordPair = {
+  present: string;
+  past: string;
+};
+
+const STATUS_WORD_PAIRS: StatusWordPair[] = [
+  { present: "Pondering", past: "Pondered" },
+  { present: "Crafting", past: "Crafted" },
+  { present: "Vibing", past: "Vibed" },
+  { present: "Simmering", past: "Simmered" },
+  { present: "Marinating", past: "Marinated" },
+  { present: "Philosophising", past: "Philosophised" },
+  { present: "Ruminating", past: "Ruminated" },
+];
+
+function hashString(value: string): number {
+  let hash = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+
+  return hash;
+}
+
+function getStatusWordPair(seed: string | null): StatusWordPair {
+  if (!seed) {
+    return STATUS_WORD_PAIRS[0];
+  }
+
+  return STATUS_WORD_PAIRS[hashString(seed) % STATUS_WORD_PAIRS.length];
+}
+
 function formatElapsedTime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
   const mins = Math.floor(seconds / 60);
@@ -26,6 +59,7 @@ export function ToolCallsSummaryBar({
   todoInfo,
   durationMs,
   startedAt,
+  statusWordSeed,
 }: {
   isExpanded: boolean;
   onToggle: () => void;
@@ -37,6 +71,8 @@ export function ToolCallsSummaryBar({
   /** ISO timestamp of when generation started — i.e. the preceding user
    *  message's createdAt — used for a live counter while streaming. */
   startedAt: string | null;
+  /** Stable per-message seed used to choose a status word pair. */
+  statusWordSeed: string | null;
 }) {
   // ---------------------------------------------------------------------------
   // Elapsed time logic
@@ -77,6 +113,8 @@ export function ToolCallsSummaryBar({
       ? Math.max(0, Math.round(durationMs / 1000))
       : liveElapsed;
 
+  const statusWordPair = getStatusWordPair(statusWordSeed);
+
   // Build the summary segments
   const segments: string[] = [];
 
@@ -104,7 +142,10 @@ export function ToolCallsSummaryBar({
       <button
         type="button"
         onClick={onToggle}
-        className="group inline-flex items-center gap-2 rounded-md py-0.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+        className={cn(
+          "group inline-flex items-center gap-2 rounded-md py-px text-sm text-muted-foreground transition-colors hover:text-foreground",
+          isStreaming && "text-foreground/90",
+        )}
       >
         <span className="flex size-3.5 shrink-0 items-center justify-center">
           <span
@@ -116,8 +157,13 @@ export function ToolCallsSummaryBar({
             )}
           />
         </span>
-        <span className="leading-none">
-          {isStreaming ? "Working…" : "Worked"}
+        <span
+          className={cn(
+            "leading-none",
+            isStreaming && "animate-pulse motion-reduce:animate-none",
+          )}
+        >
+          {isStreaming ? `${statusWordPair.present}…` : statusWordPair.past}
           {segments.length > 0 && (
             <>
               {segments.map((segment, i) => (
