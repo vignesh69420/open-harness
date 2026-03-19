@@ -100,6 +100,15 @@ mock.module("@open-harness/sandbox", () => ({
   }),
 }));
 
+const persistAssistantMessagesWithToolResultsSpy = mock(() =>
+  Promise.resolve(),
+);
+
+mock.module("./_lib/persist-tool-results", () => ({
+  persistAssistantMessagesWithToolResults:
+    persistAssistantMessagesWithToolResultsSpy,
+}));
+
 mock.module("@/lib/db/sessions", () => ({
   compareAndSetChatActiveStreamId: async () => compareAndSetResult,
   createChatMessageIfNotExists: async () => undefined,
@@ -189,6 +198,7 @@ describe("/api/chat route", () => {
     isSandboxActive = true;
     existingRunStatus = "completed";
     compareAndSetResult = true;
+    persistAssistantMessagesWithToolResultsSpy.mockClear();
     currentAuthSession = {
       user: {
         id: "user-1",
@@ -356,5 +366,21 @@ describe("/api/chat route", () => {
 
     expect(response.ok).toBe(true);
     expect(response.headers.get("x-workflow-run-id")).toBe("wrun_test-123");
+  });
+
+  test("calls persistAssistantMessagesWithToolResults on submit", async () => {
+    const { POST } = await routeModulePromise;
+
+    const response = await POST(createValidRequest());
+    expect(response.ok).toBe(true);
+
+    // Wait for the fire-and-forget call to settle
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(persistAssistantMessagesWithToolResultsSpy).toHaveBeenCalledTimes(1);
+    expect(persistAssistantMessagesWithToolResultsSpy).toHaveBeenCalledWith(
+      "chat-1",
+      expect.any(Array),
+    );
   });
 });
