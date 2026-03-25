@@ -14,7 +14,7 @@ export type AssistantFileLinkProps = StreamdownAnchorProps & {
 };
 
 const fileChipClassName =
-  "inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[0.9em] leading-none text-foreground no-underline";
+  "inline-flex max-w-full items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[0.9em] leading-none text-foreground no-underline";
 
 export function AssistantFileLink({
   children,
@@ -35,6 +35,14 @@ export function AssistantFileLink({
 
   const content = children ?? workspaceFilePath;
 
+  // Truncate from the left so the filename is always visible:
+  // "…components/assistant-file-link.tsx" instead of "apps/web/compone…"
+  const chipContent = (
+    <span dir="rtl" className="min-w-0 truncate">
+      <bdi>{content}</bdi>
+    </span>
+  );
+
   if (!onOpenFile) {
     return (
       <span
@@ -42,7 +50,7 @@ export function AssistantFileLink({
         title={workspaceFilePath}
       >
         <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        <span>{content}</span>
+        {chipContent}
       </span>
     );
   }
@@ -59,7 +67,7 @@ export function AssistantFileLink({
       title={`Open ${workspaceFilePath}`}
     >
       <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>{content}</span>
+      {chipContent}
     </button>
   );
 }
