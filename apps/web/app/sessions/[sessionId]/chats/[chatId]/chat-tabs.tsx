@@ -182,7 +182,7 @@ export function ChatTabs({ activeChatId }: ChatTabsProps) {
                   )}
                 >
                   {isRenaming ? (
-                    <div className="flex items-center px-2 py-2">
+                    <div className="flex items-center px-2 py-[7px]">
                       <input
                         ref={renameInputRef}
                         value={renameValue}
